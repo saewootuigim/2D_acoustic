@@ -1,0 +1,1 @@
+void element_reg( int elem, double *node2xy, int *elem2node, double *k_elem, double *m_elem );

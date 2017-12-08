@@ -29,12 +29,12 @@ void mesh(
 
 	printf("----- mesh generation -----\n");
 
-	*x = 10.; // x and y must be N*h where N being an EVEN number
-	*y = 10.;
-	*h = .05;
+	*x = 18.; // x and y must be N*h where N being an EVEN number
+	*y = 9.;
+	*h = .03;
 
-	nElemX = (int)((*x)/((*h)*2.));
-	nElemY = (int)((*y)/((*h)*2.));
+	nElemX = (int)((*x)/((*h)*2));
+	nElemY = (int)((*y)/((*h)*2));
 	*nNodeX = 2*nElemX+1;
 	*nNodeY = 2*nElemY+1;
 	*nNode = (*nNodeX)*(*nNodeY);
@@ -130,7 +130,14 @@ void mesh(
 	fprintf(fid,"nNodeY,%i\n",*nNodeY);
 	fprintf(fid,"nDOFall,%i\n",*nDOFall);
 	fprintf(fid,"nDOFsrf,%i\n",*nDOFsrf);
+	fprintf(fid,"dx,%e\n",*h);
 	fclose(fid);
+
+	printf(" nNodeX=%i\n",*nNodeX);
+	printf(" nNodeY=%i\n",*nNodeY);
+	printf("nDOFall=%i\n",*nDOFall);
+	printf("nDOFsrf=%i\n",*nDOFsrf);
+	printf("     h=%g\n",*h);
 }
 
 // int main()

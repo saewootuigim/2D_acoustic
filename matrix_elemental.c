@@ -33,11 +33,9 @@ void element_reg( int elem, double *node2xy, int *elem2node, double *k_elem, dou
 	{
 		for( i1=0; i1<3; i1++ )
 		{
-
 			shape2d9( xi[i0], xi[i1], N, dN );
-
-			for( i2=0; i2<2; i2++ ) {
-				for( i3=0; i3<2; i3++ ) {
+			for( i2=0; i2<2; i2++ ){
+				for( i3=0; i3<2; i3++ ){
 					Jacobi_mat[i2][i3] = .0;
 					for( i4=0; i4<9; i4++ ){
 						Jacobi_mat[i2][i3] += XT[i2][i4]*dN[i4][i3];
@@ -63,7 +61,7 @@ void element_reg( int elem, double *node2xy, int *elem2node, double *k_elem, dou
 
 			for( i2=0; i2<9; i2++ )
 			{
-				m_elem[i2] += (N[i2]*N[i2])*wi[i0]*wi[i1]*Jacobi_det;
+				m_elem[i2] += N[i2]*N[i2]*wi[i0]*wi[i1]*Jacobi_det;
                 for( i3=0; i3<9; i3++ )
                 	k_elem[i2*9+i3] += (dNi[i2][0]*dNi[i3][0] + dNi[i2][1]*dNi[i3][1])*wi[i0]*wi[i1]*Jacobi_det;
 			}

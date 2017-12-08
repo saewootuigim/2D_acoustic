@@ -8,7 +8,7 @@
 #include "global_variables.h"
 #include "assembly.h"
 
-void assemble_matrix( int FWTR, Vec Mreg, Mat Kreg, Mat Ksrf, int nElem, int *elem2loc, int nDOFsrf, int *node2DOF, int *elem2node, double *node2xy ) {
+void assemble_matrix( Vec Mreg, Mat Kreg, Mat Ksrf, int nElem, int *elem2loc, int nDOFsrf, int *node2DOF, int *elem2node, double *node2xy ) {
 
 	clock_t start = clock(), diff;
 	int msec;

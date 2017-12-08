@@ -16,14 +16,13 @@ double dabsmax( int nsize, const double *arr ) {
 
 	maximum = 0.;
 
-	for( i0=0; i0<nsize; i0++ ) {
-		if( maximum<fabs(arr[i0]) ) maximum = arr[i0];
-	}
+	for( i0=0; i0<nsize; i0++ )
+		if( maximum<fabs(arr[i0]) ) maximum = fabs(arr[i0]);
 
 	return maximum;
 }
 
-void solver_RK4( int FWTR, Vec Mreg, Mat Kreg, Mat Ksrf, Vec f, 
+void solver_RK4( Vec Mreg, Mat Kreg, Mat Ksrf, Vec f, Vec u_init,
 	int nDOFall, int nDOFsrf, double *node2xy, int *node2DOF, int DOFload, 
 	double h, double dist_max, int *nTstep, double *dt )
 {
@@ -56,22 +55,21 @@ void solver_RK4( int FWTR, Vec Mreg, Mat Kreg, Mat Ksrf, Vec f,
 	FILE *fid_u_all, *fid_u_srf, *fid_u_trg, *fid_sgnl;
 	FILE *fid;
 
-	double temp_double[1], temp_dt, temp_t;
-
-	double t, T;
-	int time_step_update;
+	double T;
+	bool apply_IC;
 
 	printf("----- solver RK4 -----\n");
 
 	DOF_load[0] = DOFload;
 
-	*dt = h/sqrt(2.); // c=1
-	offset = (*dt)*10;
-	*nTstep = dist_max/(*dt) + offset/(*dt) + 11;
-	// T = (*dt)*(*nTstep);
-	// *dt = (*dt<.005) ? *dt : .005;
-	// *nTstep = (int)(T/(*dt));
+	*dt = 2*h/sqrt(2.); // c=1
+	offset = (*dt)*70;
+	*nTstep = dist_max/(*dt) + offset/(*dt) + 1;
+	T = (*dt)*(*nTstep);
+	*dt = (*dt<.005) ? *dt : .005;
+	*nTstep = (int)(T/(*dt));
 
+	printf("      T=%f\n",T);
 	printf(" nTstep=%i\n",*nTstep);
 	printf("     dt=%f\n",*dt);
 
@@ -83,7 +81,7 @@ void solver_RK4( int FWTR, Vec Mreg, Mat Kreg, Mat Ksrf, Vec f,
 	VecDuplicate( Mreg, &temp );
 
 	/* Vec to read surface response of forward step. */
-	// if( FWTR==TR ) {
+	// if( cmd_arg.FWTR==TR ) {
 	// 	VecCreateMPI( PETSC_COMM_WORLD, PETSC_DECIDE, nDOFsrf, &u_srf );
 	// 	ux_srf_ftr = (double*)malloc(nDOFsrf/2*sizeof(double));
 	// 	uy_srf_ftr = (double*)malloc(nDOFsrf/2*sizeof(double));
@@ -92,15 +90,15 @@ void solver_RK4( int FWTR, Vec Mreg, Mat Kreg, Mat Ksrf, Vec f,
 	VecReciprocal( Mreg );
 	MatDiagonalScale( Kreg, Mreg, NULL );
 	MatScale( Kreg, -1. );
-	if( FWTR==FW ){
+	if( cmd_arg.FWTR==FW ){
 		VecPointwiseMult( f, f, Mreg );
-	} else if( FWTR==TR ) {
+	} else if( cmd_arg.FWTR==TR ) {
 		// MatScale( Ksrf, -1. );
 	}
 
 	VecSet( x1n, 0. );
 	VecSet( x2n, 0. );
-	if( FWTR==TR )
+	if( cmd_arg.FWTR!=FW )
 	{
 		VecSet( f, 0. );
 		VecDuplicate( f, &u_srf_0_PETSc );
@@ -113,17 +111,39 @@ void solver_RK4( int FWTR, Vec Mreg, Mat Kreg, Mat Ksrf, Vec f,
 
 	/* Open file for input and output. */
 	fid_u_all = fopen("output/u_all.dat","wb");
-	if( FWTR==FW )
+	if( cmd_arg.FWTR==FW )
+	{
 		fid_sgnl = fopen("output/sgnl.dat","wb");
-	else if( FWTR==TR )
+		fid_u_trg = fopen("output/u_trg_0.dat","wb");
+	}
+	else if( cmd_arg.FWTR==TR )
+	{
 		fid_u_srf = fopen("output/u_srf.dat","rb");
-	fid_u_trg = fopen("output/u_trg.dat","wb");
+		fid_u_trg = fopen("output/u_trg_1.dat","wb");
+	}
+	else if( cmd_arg.FWTR==TRFR )
+	{
+		fid_u_srf = fopen("output/u_srf_filter_real.dat","rb");
+		fid_u_trg = fopen("output/u_trg_2.dat","wb");
+	}
+	else if( cmd_arg.FWTR==TRFI )
+	{
+		fid_u_srf = fopen("output/u_srf_filter_imag.dat","rb");
+		fid_u_trg = fopen("output/u_trg_3.dat","wb");
+	}
+	else if( cmd_arg.FWTR==TRFA )
+	{
+		fid_u_srf = fopen("output/u_srf_filter_add.dat","rb");
+		fid_u_trg = fopen("output/u_trg_4.dat","wb");
+	}
+	else if( cmd_arg.FWTR==TRFN )
+	{
+		fid_u_srf = fopen("output/u_srf_filter_norm.dat","rb");
+		fid_u_trg = fopen("output/u_trg_5.dat","wb");
+	}
 
 	/* Start time stepping. */
-	// i0 = 0;
-	// t = 0.;
-	// T = (*dt)*(*nTstep);
-	// while( t<T )
+	apply_IC = false;
 	for( i0=0; i0<(*nTstep); i0++ )
 	{
 		/* loading */
@@ -131,16 +151,22 @@ void solver_RK4( int FWTR, Vec Mreg, Mat Kreg, Mat Ksrf, Vec f,
 		VecSet( k22, 0. );
 		VecSet( k32, 0. );
 		VecSet( k42, 0. );
-		if( FWTR==FW )
+		if( cmd_arg.FWTR==FW )
 		{
-			temp_double[0] = loading_fw_time_signal(i0*(*dt)-offset);
-			fwrite( &temp_double, sizeof(double), 1, fid_sgnl );
-			VecAXPY( k12, loading_fw_time_signal((i0   )*(*dt)-offset), f );
-			VecAXPY( k22, loading_fw_time_signal((i0+.5)*(*dt)-offset), f );
-			VecAXPY( k32, loading_fw_time_signal((i0+.5)*(*dt)-offset), f );
-			VecAXPY( k42, loading_fw_time_signal((i0+1.)*(*dt)-offset), f );
+			if( (*dt)*i0>=offset && apply_IC==false )
+			{
+				printf("initial condition applied, t=%f, offset=%f, time step=%i\n",(*dt)*i0,offset,i0);
+				apply_IC = true;
+				VecCopy( u_init, x1n );
+			}
+			// temp_double[0] = loading_fw_time_signal(i0*(*dt)-offset);
+			// fwrite( &temp_double, sizeof(double), 1, fid_sgnl );
+			// VecAXPY( k12, loading_fw_time_signal((i0   )*(*dt)-offset), f );
+			// VecAXPY( k22, loading_fw_time_signal((i0+.5)*(*dt)-offset), f );
+			// VecAXPY( k32, loading_fw_time_signal((i0+.5)*(*dt)-offset), f );
+			// VecAXPY( k42, loading_fw_time_signal((i0+1.)*(*dt)-offset), f );
 		}
-		else if( FWTR==TR )
+		else if( cmd_arg.FWTR!=FW )
 		{
 			if( i0!=(*nTstep)-1 )
 			{
@@ -224,19 +250,19 @@ void solver_RK4( int FWTR, Vec Mreg, Mat Kreg, Mat Ksrf, Vec f,
 		VecRestoreArrayRead( x1n, &u_all );
 
 		// timing
-		diff = clock() - start;
-		msec = diff * 1000 / CLOCKS_PER_SEC;
+		// diff = clock() - start;
+		// msec = diff * 1000 / CLOCKS_PER_SEC;
 		// printf(" step %i/%i elapse=%4i seconds %4i milliseconds\n", i0+1,*nTstep, msec/1000, msec%1000);
-		start = clock();
+		// start = clock();
 
 		/* Print response on the loading nodes. */
 		VecGetValues( x1n, 1, DOF_load, disp_load );
 		fwrite( disp_load, sizeof(PetscScalar), 1, fid_u_trg );
-		if( i0%10==0 )
+		if( i0%100==0 )
 			printf("      t=%8.5f, u_trg=%11.4e\n",i0*(*dt),disp_load[0]);
 	}
 
-	// if( FWTR==TR ) {
+	// if( cmd_arg.FWTR==TR ) {
 	// 	free( ux_srf_ftr );
 	// 	free( uy_srf_ftr );
 	// }
@@ -246,13 +272,16 @@ void solver_RK4( int FWTR, Vec Mreg, Mat Kreg, Mat Ksrf, Vec f,
 	free( u_srf_1 );
 
 	fclose( fid_u_all );
-	if( FWTR==FW ) fclose( fid_sgnl );
-	else if( FWTR==TR ) fclose( fid_u_srf );
+	if( cmd_arg.FWTR==FW ) fclose( fid_sgnl );
+	else if( cmd_arg.FWTR!=TR ) fclose( fid_u_srf );
 	fclose( fid_u_trg );
+
+	printf("maxval=%e\n",maxval);
 
 	fid = fopen("output/simulation_info.txt","wt");
 	fprintf(fid,"nTstep,%i\n",*nTstep);
 	fprintf(fid,"dt,%f\n",*dt);
 	fprintf(fid,"maxval,%e\n",maxval);
+	fprintf(fid,"print step,%i\n",cmd_arg.PS);
 	fclose(fid);
 }

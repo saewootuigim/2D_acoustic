@@ -35,14 +35,19 @@ u_ifft = ifft2(ifftshift(u_fft));
 
 max_u_ifft = max(max(abs(u_ifft)));
 
+j = 15;
+
 subplot(2,2,1); pcolor(u_srf); shading flat
 subplot(2,2,2); pcolor(abs(u_fft)); shading flat
-subplot(2,2,3); pcolor(real(u_ifft)); shading flat; caxis([-max_u_ifft,max_u_ifft]*.0001)
-subplot(2,2,4); surf(imag(u_ifft)); shading flat
+subplot(2,2,3); surf(imag(u_ifft(j+1:end-j,j+1:end-j))); shading flat;% caxis([-max_u_ifft,max_u_ifft]*.0001)
+subplot(2,2,4); pcolor(imag(u_ifft(j+1:end-j,j+1:end-j))); shading flat
 
-fid = fopen('u_srf_filter_real.dat','w');
-fwrite(fid,real(u_ifft),'double')
-fclose(fid);
-fid = fopen('u_srf_filter_imag.dat','w');
-fwrite(fid,imag(u_ifft),'double')
+temp_store = imag(u_ifft(j+1:end-j,j+1:end-j));
+u_ifft = zeros(size(u_ifft));
+u_ifft(j+1:end-j,j+1:end-j) = temp_store;
+
+subplot(2,2,3); pcolor(u_ifft); shading flat;
+
+fid = fopen('u_srf_filter.dat','w');
+fwrite(fid,u_ifft,'double');
 fclose(fid);

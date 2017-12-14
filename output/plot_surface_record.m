@@ -12,7 +12,7 @@ a = importdata('simulation_info.txt');
 nTstep = a.data(1);
 T = a.data(2);
 
-fid = fopen('u_srf_filter_imag.dat','r');
+fid = fopen('u_srf.dat','r');
 u = fread(fid,[nDOFsrf,nTstep],'double')';
 fclose(fid);
 

@@ -1,6 +1,6 @@
 all: main
 
-FLAGS  = -O3 -Wall -I${PETSC_DIR}/include -I$(PETSC_DIR)/$(PETSC_ARCH)/include -I./include -I/opt/hdf5-1.8.19/include/
+FLAGS  = -O0 -g -Wall -I${PETSC_DIR}/include -I$(PETSC_DIR)/$(PETSC_ARCH)/include -I./include -I/opt/hdf5-1.8.19/include/
 
 OBJECT = treat_args.o output.o shape_functions.o matrix_elemental.o matrix_assemble.o body_force.o mesh.o solver.o post_process.o main.o
 

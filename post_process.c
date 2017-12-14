@@ -29,7 +29,7 @@ void resolution_nodes( double h, int loading_node, double node2xy[], int nDOFall
 	}
 }
 
-void rearrange_for_plot( int nDOFall, int nDOFsrf, int nNodeX, int nNodeY, int nTstep, int node2GIx[], int node2GIy[], int DOF2node[], int DOF2ResNodeX[], int DOF2ResNodeY[] )
+void rearrange_for_plot( int nDOFall, int nDOFsrf, int nNodeX, int nNodeY, int nTstep, int node2GIx[], int node2GIy[], int DOF2node[], int DOF2ResNodeX[], int DOF2ResNodeY[], double node2xy[] )
 {
 	const char* folderr; /* To check if the output folder exists. */
     struct stat sb;      /* and this one too */
@@ -38,11 +38,13 @@ void rearrange_for_plot( int nDOFall, int nDOFsrf, int nNodeX, int nNodeY, int n
 	int ix, iy;
 	double *u_all = (double*)malloc(nDOFall*sizeof(double));
 	double *u_grid = (double*)malloc(nNodeX*nNodeY*sizeof(double));
-	double *u_res_x, *u_res_y;
+	double *u_res_x = (double*)malloc(nNodeX*sizeof(double));
+	double *u_res_y = (double*)malloc(nNodeY*sizeof(double));
 
 	FILE *fid1;
 	FILE *fid2;
 	FILE *fid3;
+	FILE *fid_temp;
 
 	char *filename = (char*)malloc(50*sizeof(char));
 
@@ -76,9 +78,6 @@ void rearrange_for_plot( int nDOFall, int nDOFsrf, int nNodeX, int nNodeY, int n
 
 	/* Extract response of horizontal and vertical line that pass the loading node. */
 	printf("extracting resolution information...\n");
-	
-	u_res_x = (double*)malloc((nNodeX-2)*sizeof(double));
-	u_res_y = (double*)malloc((nNodeY-1)*sizeof(double));
 
 	fid1 = fopen("output/u_all.dat","rb");
 	if( cmd_arg.FWTR==FW )
@@ -102,26 +101,51 @@ void rearrange_for_plot( int nDOFall, int nDOFsrf, int nNodeX, int nNodeY, int n
 		sprintf(filename,"./output/u_res_y_trfr.dat");
 		fid3 = fopen(filename,"wb");
 	}
-	
+	else if( cmd_arg.FWTR==TRFI )
+	{
+		sprintf(filename,"./output/u_res_x_trfi.dat");
+		fid2 = fopen(filename,"wb");
+		sprintf(filename,"./output/u_res_y_trfi.dat");
+		fid3 = fopen(filename,"wb");
+	}
+	else if( cmd_arg.FWTR==TRFN )
+	{
+		sprintf(filename,"./output/u_res_x_trfn.dat");
+		fid2 = fopen(filename,"wb");
+		sprintf(filename,"./output/u_res_y_trfn.dat");
+		fid3 = fopen(filename,"wb");
+	}
+
 	for( i0=0; i0<nTstep; i0++ )
 	{
 		fread(u_all,sizeof(double),nDOFall,fid1);
+
 		for( i1=0; i1<nDOFall; i1++ )
 		{
 			if( DOF2ResNodeX[i1]!=-1 )
-				u_res_x[node2GIx[DOF2ResNodeX[i1]]] = u_all[i1];
+			{
+				if( node2GIx[DOF2ResNodeX[i1]]>=0 && node2GIx[DOF2ResNodeX[i1]]<nNodeX )
+					u_res_x[node2GIx[DOF2ResNodeX[i1]]] = u_all[i1];
+				else
+					printf("DOF2ResNodeX[%i]=%i, node2GIx[%i]=%i, nNodeX-2=%i, node2xy=%.3f %.3f\n",
+						i1,DOF2ResNodeX[i1],DOF2ResNodeX[i1],node2GIx[DOF2ResNodeX[i1]],nNodeX-2,node2xy[2*DOF2ResNodeX[i1]],node2xy[2*DOF2ResNodeX[i1]+1]);
+			}
 			if( DOF2ResNodeY[i1]!=-1 )
-				u_res_y[node2GIy[DOF2ResNodeY[i1]]] = u_all[i1];
+			{
+				if( node2GIy[DOF2ResNodeY[i1]]>=0 && node2GIy[DOF2ResNodeY[i1]]<nNodeY )
+					u_res_y[node2GIy[DOF2ResNodeY[i1]]] = u_all[i1];
+				else
+					printf("DOF2ResNodeY[%i]=%i, node2GIy[%i]=%i, nNodeY-1=%i, node2xy=%.3f %.3f\n",
+						i1,DOF2ResNodeY[i1],DOF2ResNodeY[i1],node2GIy[DOF2ResNodeY[i1]],nNodeY-1,node2xy[2*DOF2ResNodeY[i1]],node2xy[2*DOF2ResNodeY[i1]+1]);
+			}
 		}
-		fwrite(u_res_x,sizeof(double),nNodeX-2,fid2);
-		fwrite(u_res_y,sizeof(double),nNodeY-1,fid3);
+		fwrite(u_res_x,sizeof(double),nNodeX,fid2);
+		fwrite(u_res_y,sizeof(double),nNodeY,fid3);
 	}
-	fclose(fid1);
-	fclose(fid2);
-	fclose(fid3);
-
-	// free( u_res_x );
-	// free( u_res_y );
+	
+	printf("fid1 closed %i\n",fclose(fid1));
+	printf("fid2 closed %i\n",fclose(fid2));
+	printf("fid3 closed %i\n",fclose(fid3));
 
     /* Rearrange for snapshots. */
 	printf("rearranging response for snapshots...\n");
@@ -155,4 +179,7 @@ void rearrange_for_plot( int nDOFall, int nDOFsrf, int nNodeX, int nNodeY, int n
 	free( u_all );
 	free( u_grid );
 	free( filename );
+
+	free( u_res_x );
+	free( u_res_y );
 }

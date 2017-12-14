@@ -12,7 +12,7 @@
 void assemble_initial_condition( double x, double y, double h, int nNodeX, int nNodeY, int *node2GIx, int *node2GIy, int nNode, double *node2xy, int *node2DOF, Vec u_init )
 {
 	double x0=.5*x;
-	double y0=.6*y;
+	double y0=.8*y;
 	double r0=10.*h;
 
 	int i0, i1;
@@ -112,7 +112,7 @@ int main( int argc, char *args[] ) {
 
 	/* Rearrange the solution into 2D grid. */
 	resolution_nodes( h, loading_node, node2xy, nDOFall, DOF2node, node2GIx, node2GIy, &DOF2ResIx, &DOF2ResIy );
-	rearrange_for_plot( nDOFall, nDOFsrf, nNodeX, nNodeY, nTstep, node2GIx, node2GIy, DOF2node, DOF2ResIx, DOF2ResIy );
+	rearrange_for_plot( nDOFall, nDOFsrf, nNodeX, nNodeY, nTstep, node2GIx, node2GIy, DOF2node, DOF2ResIx, DOF2ResIy, node2xy );
 
 	/* Wrap up. */
 	VecDestroy( &Mreg );

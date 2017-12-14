@@ -1,7 +1,7 @@
 #!/bin/bash
-sim="TRFR TRFI TRFN"
+sim="FW TR TRFN"
 for str in $sim
 do
-	echo "./main -s $str -p 1000"
-	./main -s $str -p 1000
+	echo "./main -s $str -p 15"
+	./main -s $str -p 15
 done

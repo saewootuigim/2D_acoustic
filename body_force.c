@@ -10,7 +10,7 @@ void assemble_body_force( double dim_x, double dim_y, int nNode, double *node2xy
 	printf("----- force vector assembly -----\n");
 
 	x0 = .5*dim_x;
-	y0 = .6*dim_y;
+	y0 = .8*dim_y;
 	dist_min = sqrt( dim_x*dim_x + dim_y*dim_y );
 	*dist_max = ( sqrt(x0*x0+(dim_y-y0)*(dim_y-y0)) > sqrt((dim_x-x0)*(dim_x-x0)+(dim_y-y0)*(dim_y-y0)) )
 		? sqrt(x0*x0+(dim_y-y0)*(dim_y-y0)) : sqrt((dim_x-x0)*(dim_x-x0)+(dim_y-y0)*(dim_y-y0));

@@ -138,7 +138,7 @@ void solver_RK4( Vec Mreg, Mat Kreg, Mat Ksrf, Vec f, Vec u_init,
 	}
 	else if( cmd_arg.FWTR==TRFN )
 	{
-		fid_u_srf = fopen("output/u_srf_filter_norm.dat","rb");
+		fid_u_srf = fopen("output/u_srf_filter.dat","rb");
 		fid_u_trg = fopen("output/u_trg_5.dat","wb");
 	}
 

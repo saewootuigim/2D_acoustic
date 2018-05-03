@@ -1,16 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
+#include <string.h>
 #include "metis.h"
 
 #define USAGE                                                                      \
-	"**************************************************************************\n" \
-	"program usage:\n"                                                             \
-	"\ta.out [options]\n"                                                          \
+	"usage:\n"                                                                     \
+	"\tpartition [options]\n"                                                          \
 	"options:\n"                                                                   \
-	"\t-n or --nparts\tnumber of parts to be decomposed (default: 1)\n"                         \
-	"\t-h or --help  \tprint this message\n"                                       \
-	"**************************************************************************\n\n"
+	"\t-n or --nparts\tnumber of parts to be decomposed (default: 1)\n"            \
+	"\t-h or --help  \tprint this message\n"                                       
 
 static struct option gLongOptions[] = {
 	{"nparts", required_argument, NULL, 'n'},
@@ -20,6 +19,8 @@ static struct option gLongOptions[] = {
 int main( int argc, char *argv[] )
 {
 	int option_char = 0;
+
+	char line[100], *tok;
 
 	idx_t options[METIS_NOPTIONS];
 
@@ -36,6 +37,12 @@ int main( int argc, char *argv[] )
 	idx_t objval, *epart, *npart;
 
 	// input arguments
+	if( argc==1 )
+	{
+		printf("[ERROR] Number of desired partitions is not provided.\n");
+		printf("%s",USAGE);
+		return 1;
+	}
 	while( (option_char=getopt_long( argc, argv, "n:hx", gLongOptions, NULL )) != -1 )
 	{
 		switch (option_char)
@@ -57,14 +64,16 @@ int main( int argc, char *argv[] )
 
 	// Read model.
 	fid = fopen("model_info.txt","rt");
-    fscanf(fid,"%i",&nNode);
-	fscanf(fid,"%i",&nElem);
-	fscanf(fid,"%i",&nDOFall);
-	fscanf(fid,"%i",&nDOFsrf);
-	fscanf(fid,"%i",&nDOFreg);
-	fscanf(fid,"%le",&x);
-	fscanf(fid,"%le",&y);
-	fscanf(fid,"%le",&h);
+    fgets(line,99,fid); tok = strrchr(line,','); nNode = atoi(tok+1);
+    fgets(line,99,fid); tok = strrchr(line,','); nElem = atoi(tok+1);
+    fgets(line,99,fid);
+    fgets(line,99,fid);
+    fgets(line,99,fid); tok = strrchr(line,','); nDOFall = atoi(tok+1);
+    fgets(line,99,fid); tok = strrchr(line,','); nDOFsrf = atoi(tok+1);
+    fgets(line,99,fid); tok = strrchr(line,','); nDOFreg = atoi(tok+1);
+    fgets(line,99,fid); tok = strrchr(line,','); h = atof(tok+1);
+    fgets(line,99,fid); tok = strrchr(line,','); x = atof(tok+1);
+    fgets(line,99,fid); tok = strrchr(line,','); y = atof(tok+1);
 	fclose(fid);
 	
 	printf("--- model info ---\n");
